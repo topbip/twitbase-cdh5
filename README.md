@@ -27,10 +27,13 @@ java -cp twitbase-cdh5-1.0-SNAPSHOT.jar HBaseIA.TwitBase.RelationsTool
 ================
 
 disable 'follows'
+
 alter 'follows',METHOD => 'table_att', 'Coprocessor'=>'file:///home/cloudera/twitbase-cdh5-1.0-SNAPSHOT.jar|HBaseIA.TwitBase.coprocessors.FollowsObserver|1001|'
+
 enable 'follows'
 
 ================
+
 java -cp twitbase-cdh5-1.0-SNAPSHOT.jar HBaseIA.TwitBase.RelationsTool follows TheRealMT SirDoyle
 
 java -cp twitbase-cdh5-1.0-SNAPSHOT.jar HBaseIA.TwitBase.RelationsTool list follows TheRealMT
