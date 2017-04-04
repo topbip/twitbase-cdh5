@@ -1,7 +1,13 @@
 package HBaseIA.TwitBase;
 
 import HBaseIA.TwitBase.hbase.UsersDAO;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.HTablePool;
+import org.apache.hadoop.hbase.client.Table;
 import utils.LoadUtils;
 
 import java.io.IOException;
@@ -34,8 +40,13 @@ public class LoadUsers {
       System.exit(0);
     }
 
-    HTablePool pool = new HTablePool();
-    UsersDAO dao = new UsersDAO(pool);
+    // Create a connection to the cluster.
+    Configuration conf = HBaseConfiguration.create();
+    conf.set("hbase.zookeeper.quorum","quickstart.cloudera:2181");
+
+    Connection connection = ConnectionFactory.createConnection(conf);
+
+    UsersDAO dao = new UsersDAO(connection);
 
     int count = Integer.parseInt(args[0]);
     List<String> names = LoadUtils.readResource(LoadUtils.NAMES_PATH);
@@ -48,6 +59,5 @@ public class LoadUsers {
       dao.addUser(user, name, email, "abc123");
     }
 
-    pool.closeTablePool(UsersDAO.TABLE_NAME);
   }
 }
