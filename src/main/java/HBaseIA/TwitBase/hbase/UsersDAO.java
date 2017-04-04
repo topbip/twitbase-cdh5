@@ -52,10 +52,10 @@ public class UsersDAO {
     log.debug(String.format("Creating Put for %s", u));
 
     Put p = new Put(Bytes.toBytes(u.user));
-    p.add(INFO_FAM, USER_COL, Bytes.toBytes(u.user));
-    p.add(INFO_FAM, NAME_COL, Bytes.toBytes(u.name));
-    p.add(INFO_FAM, EMAIL_COL, Bytes.toBytes(u.email));
-    p.add(INFO_FAM, PASS_COL, Bytes.toBytes(u.password));
+    p.addColumn(INFO_FAM, USER_COL, Bytes.toBytes(u.user));
+    p.addColumn(INFO_FAM, NAME_COL, Bytes.toBytes(u.name));
+    p.addColumn(INFO_FAM, EMAIL_COL, Bytes.toBytes(u.email));
+    p.addColumn(INFO_FAM, PASS_COL, Bytes.toBytes(u.password));
     return p;
   }
 
@@ -64,7 +64,7 @@ public class UsersDAO {
                           byte[] qual,
                           byte[] val) {
     Put p = new Put(Bytes.toBytes(username));
-    p.add(fam, qual, val);
+    p.addColumn(fam, qual, val);
     return p;
   }
 

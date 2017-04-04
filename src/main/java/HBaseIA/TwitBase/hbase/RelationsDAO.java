@@ -1,12 +1,13 @@
 package HBaseIA.TwitBase.hbase;
 
-import org.apache.hadoop.hbase.KeyValue;
-import org.apache.hadoop.hbase.client.HTableInterface;
-import org.apache.hadoop.hbase.client.HTablePool;
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 import utils.Md5Utils;
 
@@ -28,10 +29,11 @@ public class RelationsDAO {
 
   private static final int KEY_WIDTH = 2 * Md5Utils.MD5_LENGTH;
 
-  private HTablePool pool;
+  //private HTablePool pool;
+  private Connection connection;
 
-  public RelationsDAO(HTablePool pool) {
-    this.pool = pool;
+  public RelationsDAO(Connection connection) {
+    this.connection = connection;
   }
 
   public static byte[] mkRowKey(String a) {
@@ -71,11 +73,11 @@ public class RelationsDAO {
 
   public void addRelation(byte[] table, String fromId, String toId) throws IOException {
 
-    HTableInterface t = pool.getTable(table);
+    Table t = connection.getTable(TableName.valueOf(table));
 
     Put p = new Put(mkRowKey(fromId, toId));
-    p.add(RELATION_FAM, FROM, Bytes.toBytes(fromId));
-    p.add(RELATION_FAM, TO, Bytes.toBytes(toId));
+    p.addColumn(RELATION_FAM, FROM, Bytes.toBytes(fromId));
+    p.addColumn(RELATION_FAM, TO, Bytes.toBytes(toId));
     t.put(p);
 
     t.close();
@@ -91,7 +93,7 @@ public class RelationsDAO {
 
   public List<HBaseIA.TwitBase.model.Relation> listRelations(byte[] table, String fromId) throws IOException {
 
-    HTableInterface t = pool.getTable(table);
+    Table t = connection.getTable(TableName.valueOf(table));
     String rel = (Bytes.equals(table, FOLLOWS_TABLE_NAME)) ? "->" : "<-";
 
     byte[] startKey = mkRowKey(fromId);
@@ -102,11 +104,10 @@ public class RelationsDAO {
     scan.setMaxVersions(1);
 
     ResultScanner results = t.getScanner(scan);
-    List<HBaseIA.TwitBase.model.Relation> ret
-      = new ArrayList<HBaseIA.TwitBase.model.Relation>();
+    List<HBaseIA.TwitBase.model.Relation> ret = new ArrayList<HBaseIA.TwitBase.model.Relation>();
     for (Result r : results) {
-      KeyValue kv = r.getColumnLatest(RELATION_FAM, TO);
-      String toId = Bytes.toString(kv.getValue());
+      Cell kv = r.getColumnLatestCell(RELATION_FAM, TO);
+      String toId = Bytes.toString(kv.getValueArray());
       ret.add(new Relation(rel, fromId, toId));
     }
 
@@ -116,7 +117,7 @@ public class RelationsDAO {
 
   @SuppressWarnings("unused")
   public long followedByCountScan (String user) throws IOException {
-    HTableInterface followed = pool.getTable(FOLLOWED_TABLE_NAME);
+    Table followed = connection.getTable(TableName.valueOf(FOLLOWED_TABLE_NAME));
 
     final byte[] startKey = Md5Utils.md5sum(user);
     final byte[] endKey = Arrays.copyOf(startKey, startKey.length);
