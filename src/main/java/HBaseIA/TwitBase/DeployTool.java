@@ -1,5 +1,6 @@
 package HBaseIA.TwitBase;
 
+import HBaseIA.TwitBase.coprocessors.FollowsObserver;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.Coprocessor;
@@ -11,12 +12,14 @@ import org.apache.hadoop.hbase.client.Admin;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 
+import java.io.IOException;
+
 /**
  * Created by junliang on 2017/4/4.
  */
 public class DeployTool {
 
-  public static void main(String[] args) {
+  public static void main(String[] args) throws IOException {
 
     TableName tableName = TableName.valueOf("follows");
     Path path = new Path("hdfs://<namenode>:<port>/user/<hadoop-user>/coprocessor.jar");
@@ -32,7 +35,7 @@ public class DeployTool {
     HColumnDescriptor columnFamily2 = new HColumnDescriptor("salaryDet");
     columnFamily2.setMaxVersions(3);
     hTableDescriptor.addFamily(columnFamily2);
-    hTableDescriptor.addCoprocessor(RegionObserverExample.class.getCanonicalName(), path,
+    hTableDescriptor.addCoprocessor(FollowsObserver.class.getCanonicalName(), path,
                                     Coprocessor.PRIORITY_USER, null);
     admin.modifyTable(tableName, hTableDescriptor);
     admin.enableTable(tableName);

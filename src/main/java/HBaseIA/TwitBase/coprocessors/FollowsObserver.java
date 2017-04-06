@@ -3,9 +3,11 @@ package HBaseIA.TwitBase.coprocessors;
 import HBaseIA.TwitBase.hbase.RelationsDAO;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CoprocessorEnvironment;
+import org.apache.hadoop.hbase.KeyValue;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Durability;
+import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.coprocessor.BaseRegionObserver;
 import org.apache.hadoop.hbase.coprocessor.ObserverContext;
@@ -14,6 +16,7 @@ import org.apache.hadoop.hbase.regionserver.wal.WALEdit;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
+import java.util.List;
 
 import static HBaseIA.TwitBase.hbase.RelationsDAO.FOLLOWS_TABLE_NAME;
 import static HBaseIA.TwitBase.hbase.RelationsDAO.FROM;
@@ -23,6 +26,8 @@ import static HBaseIA.TwitBase.hbase.RelationsDAO.TO;
 public class FollowsObserver extends BaseRegionObserver {
 
   private Connection connection = null;
+
+  private static byte[] fixed_rowkey = "Jack".getBytes();
 
   @Override
   public void start(CoprocessorEnvironment env) throws IOException {
@@ -54,5 +59,21 @@ public class FollowsObserver extends BaseRegionObserver {
 
     RelationsDAO relations = new RelationsDAO(connection);
     relations.addFollowedBy(to, from);
+  }
+
+  @Override
+  public void postGetOp(
+    ObserverContext<RegionCoprocessorEnvironment> e,
+    Get get,
+    List<Cell> results
+  ) throws IOException {
+    //super.postGetOp(e, get, results);
+    if (!Bytes.equals(get.getRow(), fixed_rowkey)) {
+
+      KeyValue kv = new KeyValue(get.getRow(), Bytes.toBytes("f"),
+                                 Bytes.toBytes("time"),
+                                 Bytes.toBytes(System.currentTimeMillis()));
+      results.add(kv);
+    }
   }
 }
